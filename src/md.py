@@ -22,7 +22,56 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     return re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
 
+def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
+    new_nodes = []
+    for node in old_nodes:
+        images = extract_markdown_images(node.text)
+        splt = re.split(r'(!\[.*?\]\(.*?\))', node.text)
+        i = 0
+        for text in splt:
+            if not text:
+                continue
+            if text[0] == "!":
+                new_nodes.append(TextNode(re.search(r"(?<=!\[)[^\[\]]*(?=\])", text).group(), TextType.IMAGE, re.search(r"(?<=\]\()[^\(\)]*(?=\))", text).group()))
+            else:
+                new_nodes.append(TextNode(text, TextType.TEXT))
+    return new_nodes
+
+def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
+    new_nodes = []
+    for node in old_nodes:
+        if node.text_type != TextType.TEXT:
+            new_nodes.append(node)
+            continue
+        splt = re.split(r'((?<!!)\[.*?\]\(.*?\))', node.text)
+        for text in splt:
+            if not text:
+                continue
+            if re.fullmatch(r"\[[^\[\]]*\]\([^\(\)]*\)", text):
+                new_nodes.append(TextNode(re.search(r"(?<=\[)[^\[\]]*(?=\])", text).group(), TextType.LINK, re.search(r"(?<=\]\()[^\(\)]*(?=\))", text).group()))
+            else:
+                new_nodes.append(TextNode(text, TextType.TEXT))
+    return new_nodes
+
     """
+node = TextNode(
+    "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)",
+    TextType.TEXT,
+)
+new_nodes = split_nodes_link([node])
+# [
+#     TextNode("This is text with a link ", TextType.TEXT),
+#     TextNode("to boot dev", TextType.LINK, "https://www.boot.dev"),
+#     TextNode(" and ", TextType.TEXT),
+#     TextNode(
+#         "to youtube", TextType.LINK, "https://www.youtube.com/@bootdotdev"
+#     ),
+# ]
+
+
+
+
+
 # images
 r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
 
