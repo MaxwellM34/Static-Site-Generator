@@ -1,6 +1,6 @@
 import unittest
 from textnode import TextNode, TextType
-from md import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_link, split_nodes_image, text_to_textnodes
+from md import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_link, split_nodes_image, text_to_textnodes, markdown_to_blocks, block_to_block_type, BlockType
 
 '''
 
@@ -91,6 +91,47 @@ class TestMD(unittest.TestCase):
         ]
 
         self.assertEqual(expected, text_to_textnodes(text))
+
+    def test_markdown_to_blocks(self):
+        md = """
+            This is **bolded** paragraph
+
+            This is another paragraph with _italic_ text and `code` here
+            This is the same paragraph on a new line
+
+            - This is a list
+            - with items
+        """
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+
+    def test_markdown_to_block_types(self):
+        md = """
+            This is **bolded** paragraph
+
+            1. This is another paragraph with _italic_ text and `code` here
+            2. This is the same paragraph on a new line
+
+            - This is a list
+            - with items
+        """
+
+        expected = [BlockType.PARAGRAPH, BlockType.ORDERED_LIST, BlockType.UNORDERED_LIST]
+
+        blocks = markdown_to_blocks(md)
+        types = []
+        for block in blocks:
+            types.append(block_to_block_type(block))
+        
+        self.assertEqual(types, expected)   
 
 
 
